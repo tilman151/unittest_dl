@@ -1,4 +1,5 @@
 import torch
+from torch.utils.data import DataLoader
 
 
 class ModelTestsMixin:
@@ -59,3 +60,55 @@ class ModelTestsMixin:
 
         # Clear gradients to make test independent
         optim.zero_grad()
+
+
+class DatasetTestsMixin:
+    def test_scaling(self):
+        with self.subTest(split='train'):
+            self._check_scaling(self.data.train_data)
+        with self.subTest(split='test'):
+            self._check_scaling(self.data.test_data)
+
+    def _check_scaling(self, data):
+        for sample, _ in data:
+            # Values are in range [-1, 1]
+            self.assertGreaterEqual(1, sample.max())
+            self.assertLessEqual(-1, sample.min())
+            # Values are not only covering [0, 1] or [-1, 0]
+            self.assertTrue(torch.any(sample < 0))
+            self.assertTrue(torch.any(sample > 0))
+
+    def test_augmentation(self):
+        with self.subTest(split='train'):
+            self._check_augmentation(self.data.train_data, active=True)
+        with self.subTest(split='test'):
+            self._check_augmentation(self.data.test_data, active=False)
+
+    def _check_augmentation(self, data, active):
+        are_same = []
+        for i in range(len(data)):
+            sample_1, _ = data[i]
+            sample_2, _ = data[i]
+            are_same.append(0 == torch.sum(sample_1 - sample_2))
+
+        if active:
+            self.assertTrue(not all(are_same))
+        else:
+            self.assertTrue(all(are_same))
+
+    def test_single_process_dataloader(self):
+        with self.subTest(split='train'):
+            self._check_dataloader(self.data.train_data, num_workers=0)
+        with self.subTest(split='test'):
+            self._check_dataloader(self.data.test_data, num_workers=0)
+
+    def test_multi_process_dataloader(self):
+        with self.subTest(split='train'):
+            self._check_dataloader(self.data.train_data, num_workers=2)
+        with self.subTest(split='test'):
+            self._check_dataloader(self.data.test_data, num_workers=2)
+
+    def _check_dataloader(self, data, num_workers):
+        loader = DataLoader(data, batch_size=4, num_workers=num_workers)
+        for _ in loader:
+            pass
