@@ -4,7 +4,7 @@ import torchvision
 import torchvision.transforms as forms
 
 
-class MNIST:
+class MyMNIST:
     def __init__(self):
         script_path = os.path.dirname(__file__)
         data_root = os.path.join(script_path, '..', 'data')

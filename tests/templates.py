@@ -63,6 +63,16 @@ class ModelTestsMixin:
 
 
 class DatasetTestsMixin:
+    def test_shape(self):
+        with self.subTest(split='train'):
+            self._check_shape(self.data.train_data)
+        with self.subTest(split='test'):
+            self._check_shape(self.data.test_data)
+
+    def _check_shape(self, dataset):
+        sample, _ = dataset[0]
+        self.assertEqual(self.data_shape, sample.shape)
+
     def test_scaling(self):
         with self.subTest(split='train'):
             self._check_scaling(self.data.train_data)
