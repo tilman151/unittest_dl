@@ -11,13 +11,17 @@ class ModelTestsMixin:
     @torch.no_grad()
     def test_device_moving(self):
         net_on_gpu = self.net.to('cuda:0')
+        net_back_on_cpu = net_on_gpu.cpu()
 
         torch.manual_seed(42)
         outputs_cpu = self.net(self.test_inputs)
         torch.manual_seed(42)
         outputs_gpu = net_on_gpu(self.test_inputs.to('cuda:0'))
+        torch.manual_seed(42)
+        outputs_back_on_cpu = net_back_on_cpu(self.test_inputs)
 
         self.assertAlmostEqual(0., torch.sum(outputs_cpu - outputs_gpu.cpu()))
+        self.assertAlmostEqual(0., torch.sum(outputs_cpu - outputs_back_on_cpu))
 
     def test_batch_independence(self):
         inputs = self.test_inputs.clone()
@@ -49,17 +53,16 @@ class ModelTestsMixin:
     def test_all_parameters_updated(self):
         optim = torch.optim.SGD(self.net.parameters(), lr=0.1)
 
-        optim.zero_grad()
         outputs = self.net(self.test_inputs)
         loss = outputs.mean()
         loss.backward()
+        optim.step()
 
-        for param in self.net.parameters():
-            self.assertIsNotNone(param.grad)
-            self.assertNotEqual(0., torch.sum(param.grad ** 2))
-
-        # Clear gradients to make test independent
-        optim.zero_grad()
+        for param_name, param in self.net.named_parameters():
+            if param.requires_grad:
+                with self.subTest(name=param_name):
+                    self.assertIsNotNone(param.grad)
+                    self.assertNotEqual(0., torch.sum(param.grad ** 2))
 
 
 class DatasetTestsMixin:
