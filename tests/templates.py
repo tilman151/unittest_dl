@@ -1,3 +1,5 @@
+import unittest
+
 import torch
 from torch.utils.data import DataLoader
 
@@ -9,6 +11,7 @@ class ModelTestsMixin:
         self.assertEqual(self.test_inputs.shape, outputs.shape)
 
     @torch.no_grad()
+    @unittest.skipUnless(torch.cuda.is_available(), 'No GPU was detected')
     def test_device_moving(self):
         net_on_gpu = self.net.to('cuda:0')
         net_back_on_cpu = net_on_gpu.cpu()
