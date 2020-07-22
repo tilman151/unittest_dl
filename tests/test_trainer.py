@@ -60,7 +60,6 @@ class TestTrainer(unittest.TestCase):
         self.assertGreaterEqual(30, self.vae_trainer.eval())
 
     def test_logging(self):
-        # Train a single epoch with a single batch
         with mock.patch.object(self.vae_trainer.summary, 'add_scalar') as add_scalar_mock:
             self.vae_trainer.train(1)
 
