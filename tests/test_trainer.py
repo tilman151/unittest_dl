@@ -33,21 +33,23 @@ class TestTrainer(unittest.TestCase):
 
     @torch.no_grad()
     def test_kl_divergence(self):
-        mu = 0.5
-        sigma = 0.8
-        standard_normal_samples = np.random.randn(100000)
+        mu = np.random.randn(10) * 0.25
+        sigma = np.random.randn(10) * 0.1 + 1.
+        standard_normal_samples = np.random.randn(100000, 10)
         transformed_normal_sample = standard_normal_samples * sigma + mu
 
         # Calculate empirical pdfs for both distributions
         bins = 1000
-        range = [-2, 2]
-        standard_normal_dist, bins_1 = np.histogram(standard_normal_samples, bins, range)
-        transformed_normal_dist, bins_2 = np.histogram(transformed_normal_sample, bins, range)
+        bin_range = [-2, 2]
+        expected_kl_div = 0
+        for i in range(10):
+            standard_normal_dist, _ = np.histogram(standard_normal_samples[:, i], bins, bin_range)
+            transformed_normal_dist, _ = np.histogram(transformed_normal_sample[:, i], bins, bin_range)
+            expected_kl_div += scipy.stats.entropy(transformed_normal_dist, standard_normal_dist)
 
-        expected_kl_div = scipy.stats.entropy(transformed_normal_dist, standard_normal_dist, base=np.e)
         actual_kl_div = self.vae_trainer._kl_divergence(torch.tensor(sigma).log(), torch.tensor(mu))
 
-        self.assertAlmostEqual(expected_kl_div, actual_kl_div.numpy(), delta=0.01)
+        self.assertAlmostEqual(expected_kl_div, actual_kl_div.numpy(), delta=0.05)
 
     def test_overfit_on_one_batch(self):
         # Overfit on single batch
