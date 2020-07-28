@@ -79,16 +79,18 @@ class Trainer:
         return eval_loss
 
     def _eval_step(self, batch):
-        kl_div_loss, recon_loss = self._calc_loss(batch)
-        loss = recon_loss + kl_div_loss
+        _, recon_loss = self._calc_loss(batch)
 
-        return loss.item()
+        return recon_loss.item()
 
     def _eval_and_log(self):
         print(f'Evaluate epoch {self._epoch}: ', end='')
         eval_loss = self.eval()
         print(eval_loss)
         self.summary.add_scalar('test/loss', eval_loss, self._epoch)
+
+        images = self.generate(n=10)
+        self.summary.add_images('test', images, global_step=self._epoch)
 
     def _save_model(self):
         save_path = os.path.join(self.log_dir, f'model_{str(self._epoch).zfill(3)}.pth')
