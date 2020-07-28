@@ -78,6 +78,15 @@ class Trainer:
 
         return eval_loss
 
+    def generate(self, n):
+        self.model.eval()
+
+        samples = torch.stack([self.data.test_data[i][0] for i in range(n)])
+        images = self.model(samples)
+        images = torch.cat([samples, images], dim=3)
+
+        return images
+
     def _eval_step(self, batch):
         _, recon_loss = self._calc_loss(batch)
 
@@ -90,7 +99,8 @@ class Trainer:
         self.summary.add_scalar('test/loss', eval_loss, self._epoch)
 
         images = self.generate(n=10)
-        self.summary.add_images('test', images, global_step=self._epoch)
+        for i, img in enumerate(images):
+            self.summary.add_image(f'test/{i}', img, global_step=self._epoch)
 
     def _save_model(self):
         save_path = os.path.join(self.log_dir, f'model_{str(self._epoch).zfill(3)}.pth')
