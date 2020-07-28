@@ -3,7 +3,7 @@ import unittest
 import torch
 
 import model
-from . import templates
+from tests import templates
 
 
 class TestCNNVAE(unittest.TestCase, templates.ModelTestsMixin):

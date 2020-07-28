@@ -3,7 +3,7 @@ import unittest
 import torch
 
 import dataset
-from . import templates
+from tests import templates
 
 class TestMNIST(unittest.TestCase, templates.DatasetTestsMixin):
     def setUp(self):
