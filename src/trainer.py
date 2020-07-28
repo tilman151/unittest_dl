@@ -1,5 +1,6 @@
 import os
 
+import tqdm
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Subset
@@ -18,6 +19,7 @@ class Trainer:
         self._step = 0
         self._train_data = DataLoader(self.data.train_data, batch_size, shuffle=True, num_workers=2)
         self._test_data = DataLoader(self.data.test_data, batch_size, shuffle=False, num_workers=2)
+        self._progress_bar = None
 
         self.summary = SummaryWriter(log_dir)
 
@@ -27,13 +29,15 @@ class Trainer:
         for e in range(epochs):
             self._epoch = e
             self._train_epoch()
-            eval_loss = self.eval()
-            self.summary.add_scalar('test/loss', eval_loss, self._epoch)
+            self._eval_and_log()
             self._save_model()
 
     def _train_epoch(self):
+        self._progress_bar = tqdm.tqdm(self._train_data)
+        self._progress_bar.set_description(f'Epoch {self._epoch}')
+
         self.model.train()
-        for batch in self._train_data:
+        for batch in self._progress_bar:
             self._train_step(batch)
 
     def _train_step(self, batch):
@@ -43,9 +47,10 @@ class Trainer:
         loss.backward()
         self.optimizer.step()
 
-        self.summary.add_scalar('train/recon_loss', recon_loss, self._step)
-        self.summary.add_scalar('train/kl_div_loss', kl_div_loss, self._step)
-        self.summary.add_scalar('train/loss', loss, self._step)
+        self._progress_bar.set_postfix({'loss': loss.item()})
+        self.summary.add_scalar('train/recon_loss', recon_loss.item(), self._step)
+        self.summary.add_scalar('train/kl_div_loss', kl_div_loss.item(), self._step)
+        self.summary.add_scalar('train/loss', loss.item(), self._step)
         self._step += 1
 
     def _calc_loss(self, batch):
@@ -78,6 +83,12 @@ class Trainer:
         loss = recon_loss + kl_div_loss
 
         return loss.item()
+
+    def _eval_and_log(self):
+        print(f'Evaluate epoch {self._epoch}: ', end='')
+        eval_loss = self.eval()
+        print(eval_loss)
+        self.summary.add_scalar('test/loss', eval_loss, self._epoch)
 
     def _save_model(self):
         save_path = os.path.join(self.log_dir, f'model_{str(self._epoch).zfill(3)}.pth')
