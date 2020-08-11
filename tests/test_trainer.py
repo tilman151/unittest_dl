@@ -26,7 +26,11 @@ class TestTrainer(unittest.TestCase):
         vae = model.CNNVAE(self.data.train_data[0][0].shape, bottleneck_dim=10)
         optim = torch.optim.Adam(vae.parameters())
         self.log_dir = tempfile.mkdtemp()
-        self.vae_trainer = trainer.Trainer(vae, self.data, optim, batch_size=4, device='cpu', log_dir=self.log_dir)
+        self.vae_trainer = trainer.Trainer(vae, self.data, optim,
+                                           batch_size=4,
+                                           device='cpu',
+                                           log_dir=self.log_dir,
+                                           num_generated_images=1)
 
     def tearDown(self):
         shutil.rmtree(self.log_dir)

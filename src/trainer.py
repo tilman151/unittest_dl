@@ -8,12 +8,13 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 class Trainer:
-    def __init__(self, model, data, optimizer, batch_size, device, log_dir='./results'):
+    def __init__(self, model, data, optimizer, batch_size, device, log_dir='./results', num_generated_images=10):
         self.model = model.to(device)
         self.data = data
         self.optimizer = optimizer
         self.device = device
         self.log_dir = log_dir
+        self._num_generated_images = num_generated_images
 
         self._epoch = 0
         self._step = 0
@@ -98,7 +99,7 @@ class Trainer:
         print(eval_loss)
         self.summary.add_scalar('test/loss', eval_loss, self._epoch)
 
-        images = self.generate(n=10)
+        images = self.generate(n=self._num_generated_images)
         for i, img in enumerate(images):
             self.summary.add_image(f'test/{i}', img, global_step=self._epoch)
 
