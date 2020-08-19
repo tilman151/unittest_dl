@@ -15,7 +15,7 @@ First, install the packages specified in the `requirements.txt` file.
 ```
 conda create -n unittest_dl python=3.7
 conda activate unittest_dl
-conda install --file requirements.txt
+conda install --file requirements.txt -c pytorch
 
 ## or
 
